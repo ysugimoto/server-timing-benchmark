@@ -16,7 +16,7 @@ This package supports `http/https` module and `express`.
 
 ### http
 
-```
+```js
 const http = require('http');
 const serverTimingBenchmark = require('server-timing-benchmark');
 
@@ -45,7 +45,7 @@ with body of 'response'.
 
 ### express
 
-```
+```js
 const express = require('express');
 const serverTimingBenchmark = require('server-timing-benchmark');
 
