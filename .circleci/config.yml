@@ -29,9 +29,9 @@ definitions:
         - run: npm test
 
         - persist_to_workspace:
-          root: ~/workspace
-          paths:
-            - ./*
+            root: ~/workspace
+            paths:
+              - ./*
     publish:
       <<: *workspace
       steps:
