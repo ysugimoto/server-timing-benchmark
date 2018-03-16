@@ -38,6 +38,7 @@ definitions:
         - attach_workspace:
             at: ~/workspace
         - setup_remote_docker
+        - run: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
         - run: npm publish
 
 jobs:
