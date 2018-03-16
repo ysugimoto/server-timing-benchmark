@@ -1,0 +1,61 @@
+# Golang CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-go/ for more details
+version: 2
+
+definitions:
+  workspace: &workspace
+    working_directory: ~/workspace
+    docker:
+      # specify the version
+      - image: circleci/node:8.9.1
+
+  job_presets: &job_presets
+    build:
+      <<: *workspace
+      steps:
+        - checkout
+        - restore_cache:
+            keys:
+              - v1-dependencies-{{ checksum "package-lock.json" }}
+
+        - run: npm install
+
+        - save_cache:
+            paths:
+              - ~/workspace/node_modules
+            key: v1-dependencies-{{ checksum "package-lock.json" }}
+
+        - run: npm test
+
+        - persist_to_workspace:
+          root: ~/workspace
+          paths:
+            - ./*
+    publish:
+      <<: *workspace
+      steps:
+        - attach_workspace:
+            at: ~/workspace
+        - setup_remote_docker
+        - run: npm publish
+
+jobs:
+  <<: *job_presets
+
+workflows:
+  version: 2
+  build_and_publish:
+    jobs:
+      - build:
+          filters:
+            tags:
+              only: /v[0-9]+(\.[0-9]+)*/
+      - publish:
+          requires:
+            - build
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /v[0-9]+(\.[0-9]+)*/
