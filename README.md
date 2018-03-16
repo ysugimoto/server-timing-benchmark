@@ -51,7 +51,7 @@ const serverTimingBenchmark = require('server-timing-benchmark');
 
 const app = express();
 app.use(serverTimingBenchmark());
-app.use((res, res) => {
+app.use((req, res) => {
 
   // Create benchmarker
   const benchmark = req.benchmark();
