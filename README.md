@@ -67,6 +67,11 @@ app.use((req, res) => {
     .then(benchmark('promiseFunction'))
     .then(data => res.send(data))
   ;
+
+  // Or wrap promise function
+  // benchmark('promiseFunction', promiseFunction())
+  //   .then(data => res.send(data))
+  // ;
 });
 app.listen(8888);
 ```
