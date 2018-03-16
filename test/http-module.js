@@ -20,7 +20,37 @@ describe('HTTP builtin module usecase test', () => {
     server.listen(0, () => {
       http.get(`http://localhost:${server.address().port}/`, res => {
         const st = res.headers['server-timing'];
-        expect(st).match(/someFunction; dur=.*;?/);
+        expect(st).match(/someFunction; dur=.*/);
+
+        let body = '';
+        res.on('data', c => {
+          body += c;
+        });
+        res.on('end', () => {
+          expect(body).to.equal('foo');
+          server.close();
+        });
+      });
+    });
+  });
+
+  it('Combine headers', () => {
+    const server = http.createServer((req, res) => {
+      serverTimingBenchmark()(req, res);
+      const benchmark = req.benchmark();
+
+      const someFunction = () => {
+        return 'foo';
+      };
+      const ret = benchmark('someFunction', someFunction());
+      res.setHeader('Server-Timing', 'example; dur=100');
+      res.end(ret);
+    });
+
+    server.listen(0, () => {
+      http.get(`http://localhost:${server.address().port}/`, res => {
+        const st = res.headers['server-timing'];
+        expect(st).match(/example; dur=100, someFunction; dur=.*/);
 
         let body = '';
         res.on('data', c => {
@@ -41,7 +71,7 @@ describe('HTTP builtin module usecase test', () => {
 
       const promiseFunc = () => {
         return new Promise(resolve => {
-          resolve('foo');
+          setTimeout(() => resolve('foo'), 1000);
         });
       };
       promiseFunc()
@@ -53,7 +83,7 @@ describe('HTTP builtin module usecase test', () => {
     server.listen(0, () => {
       http.get(`http://localhost:${server.address().port}/`, res => {
         const st = res.headers['server-timing'];
-        expect(st).match(/promiseFunc; dur=.*;?/);
+        expect(st).match(/promiseFunc; dur=.*/);
         let body = '';
         res.on('data', c => {
           body += c;
@@ -74,7 +104,7 @@ describe('HTTP builtin module usecase test', () => {
 
       const promiseFunc = () => {
         return new Promise(resolve => {
-          resolve('foo');
+          setTimeout(() => resolve('foo'), 1000);
         });
       };
       promiseFunc()
@@ -87,7 +117,7 @@ describe('HTTP builtin module usecase test', () => {
       http.get(`http://localhost:${server.address().port}/`, res => {
         const st = res.headers['server-timing'];
         // eslint-disable-next-line no-unused-expressions
-        expect(st).to.be.empty;
+        expect(st).to.be.undefined;
         let body = '';
         res.on('data', c => {
           body += c;

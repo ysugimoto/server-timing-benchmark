@@ -1,9 +1,30 @@
-const serverTiming = require('server-timing');
+const _benchmark = metrics => {
+  return () => {
+    let start = Date.now();
+
+    const mark = (name, anyData) => {
+      const now = Date.now();
+      const dur = now - start;
+      metrics.push({name, dur});
+
+      // update elapsed time
+      start = now;
+      return anyData;
+    };
+
+    // If second argument has been passed, run benchmark immediately.
+    // Otherwise, returns lazy function which is useful for promise result handling.
+    return function (name, anyData) {
+      return (arguments.length === 1) ?
+        anyData => mark(name, anyData) :
+        mark(name, anyData)
+        ;
+    };
+  };
+};
 
 module.exports = options => {
-  const stm = serverTiming(Object.assign(options || {}, {total: false}));
   return (req, res, next) => {
-
     // Toggle enable/disable benchmarking
     let isDisabled = false;
     req.disableBenchmark = () => {
@@ -13,44 +34,32 @@ module.exports = options => {
       isDisabled = false;
     };
 
-    // Create benchmarker
-    req.benchmark = () => {
-      let start = Date.now();
-      const mark = (name, anyData) => {
-        const mark = Date.now();
-        if (!isDisabled) {
-          res.setMetric(name, (mark - start));
-        }
-        // update elapsed time
-        start = mark;
-        return anyData;
-      };
+    const metrics = [];
 
-      // If second argument has been passed, run benchmark immediately.
-      // Otherwise, returns lazy function which is useful for promise result handling.
-      //
-      // ## Example
-      // const benchmark = req.benchmark();
-      //
-      // // Call immediately (basic usage)
-      // benchmark('someFunction', someFunction())
-      //
-      // // Benchmark with promise
-      // someProcess()
-      // .then(benchmark('someProcess'))
-      // .then(result => {
-      //   // do something
-      //  });
-      return function (name, anyData) {
-        return (arguments.length === 1) ?
-          anyData => mark(name, anyData) :
-          mark(name, anyData);
-      };
+    // Create benchmarker
+    req.benchmark = _benchmark(metrics);
+
+    // Overwrite writeHead
+    // Stack default behaivor and overwrite
+    const defaultWriteHead = res.writeHead;
+    res.writeHead = function() {
+      if (!isDisabled) {
+        const values = metrics
+          .reduce((prev, next) => {
+            prev.push(`${next.name}; dur=${next.dur}`);
+            return prev;
+          }, [res.getHeader('Server-Timing')])
+          .filter(v => v)
+        ;
+        if (values.length > 0) {
+          res.setHeader('Server-Timing', values.join(', '));
+        }
+      }
+
+      defaultWriteHead.apply(res, arguments);
     };
 
-    // Chain middleware
-    stm(req, res, next);
-
+    // if module is used via express middleware, call next
     if (typeof next === 'function') {
       next();
     }
