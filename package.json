@@ -1,6 +1,6 @@
 {
   "name": "server-timing-benchmark",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Server-side benchmark based on Server Timing API",
   "main": "index.js",
   "scripts": {
@@ -10,7 +10,10 @@
     "type": "git",
     "url": "git+https://github.com/ysugimoto/server-timing-benchmark.git"
   },
-  "keywords": ["servcer-timing", "benchmark"],
+  "keywords": [
+    "servcer-timing",
+    "benchmark"
+  ],
   "author": "ysugimoto",
   "license": "MIT",
   "bugs": {
